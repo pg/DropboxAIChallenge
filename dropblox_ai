@@ -6,6 +6,7 @@
 import json
 import sys
 import time
+import random
 
 class InvalidMoveError(ValueError):
   pass
@@ -112,6 +113,18 @@ class Block(object):
         return True
     self.unrotate()
     return False
+    
+  def bottom(self):
+    bottom_squares = []
+    for i in range(4):
+      i_vals = [square.i for square in self.squares()]
+      min_i = max(i_vals)
+      bottom_squares.append(i_vals.count(min_i))
+      self.rotate()
+    for i in range(4):
+      self.unrotate()
+    max_val = max(bottom_squares)
+    return bottom_squares.index(max_val)
 
   def do_command(self, command):
     assert(command in ('left', 'right', 'up', 'down', 'rotate')), \
@@ -141,8 +154,8 @@ class Board(object):
     return str(self)
 
   def __str__(self):
-    return '\n'.join(' '.join('X' if elt else '.' for elt in row) for row in self.bitmap)
-    #return '\n'.join(' '.join(str(elt) if elt else '.' for elt in row) for row in self.bitmap)
+    #return '\n'.join(' '.join('X' if elt else '.' for elt in row) for row in self.bitmap)
+    return '\n'.join(' '.join(str(elt) if elt else '.' for elt in row) for row in self.bitmap)
 
   @staticmethod
   def construct_from_json(state_json):
@@ -220,14 +233,12 @@ if __name__ == '__main__':
 
     # current block
     block = board.block
-    print block.height
-    print block.width
+    print >> sys.stderr, str(block.height) + ' ' + str(block.width)
 
     # very simple AI that moves the current block as far left as possible
     moves = []                  # list of moves to make
-    if block.height > block.width:
-      if block.checked_rotate(board):
-        moves.append('rotate')
+    for i in range(block.bottom()):
+      moves.append('rotate')
     while block.checked_right(board):
       moves.append('right')
     while block.checked_down(board):
@@ -236,7 +247,7 @@ if __name__ == '__main__':
       moves.append('left')
     for move in moves:          # print our moves
       print move
-    print board
+    print >> sys.stderr, board
     sys.stdout.flush()          # flush stdout
 
 
